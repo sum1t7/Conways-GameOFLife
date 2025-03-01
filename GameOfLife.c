@@ -1,12 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <windows.h>
+#include <unistd.h>
+#include <string.h>
+#include <time.h>
 
-#define WIDTH 25
-#define HEIGHT 25
+#define WIDTH 200
+#define HEIGHT 100
 #define BACKGROUND '-'
 #define SPEED 100
-#define CELL 'O'
+#define CELL 'E'
 
 typedef enum
 {
@@ -21,14 +23,18 @@ typedef struct
 
 // GRID STUFF
 Cell grid[WIDTH][HEIGHT] = {0};
- 
+
 void init_grid()
 {
     for (size_t i = 0; i < HEIGHT; i++)
     {
         for (size_t j = 0; j < WIDTH; j++)
         {
-
+            if (rand() % 5 == 0 && rand() % 2 == 0)
+            {
+                grid[i][j].state = ALIVE;
+                continue;
+            }
             grid[i][j].state = DEAD;
         }
     }
@@ -58,6 +64,16 @@ int print_grid()
 
 void gen_next()
 {
+    Cell new_grid[WIDTH][HEIGHT] = {0};
+
+    for (size_t i = 0; i < HEIGHT; i++)
+    {
+        for (size_t j = 0; j < WIDTH; j++)
+        {
+            new_grid[i][j].state = grid[i][j].state;
+        }
+    }
+
     for (size_t i = 0; i < HEIGHT; i++)
     {
         for (size_t j = 0; j < WIDTH; j++)
@@ -67,52 +83,53 @@ void gen_next()
             {
                 for (int l = -1; l <= 1; l++)
                 {
+                    int row = (i + k) % HEIGHT;
+                    int col = (j + l) % WIDTH;
                     if (k == 0 && l == 0)
                         continue;
-                    if (i + k < HEIGHT && i + k >= 0 && j + l < WIDTH && j + l >= 0)
-                    {
-                        if (grid[i + k][j + l].state == ALIVE)
-                            alive_count++;
-                    }
+                    if (grid[row][col].state == ALIVE)
+                        alive_count++;
                 }
             }
             switch (alive_count)
             {
             case 0:
             case 1:
-                grid[i][j].state = DEAD;
+                new_grid[i][j].state = DEAD;
                 break;
             case 2:
             case 3:
                 if (grid[i][j].state == DEAD && alive_count == 3)
-                    grid[i][j].state = ALIVE;
+                {
+                    new_grid[i][j].state = ALIVE;
+                }
                 break;
             default:
-                grid[i][j].state = DEAD;
+                new_grid[i][j].state = DEAD;
                 break;
             }
         }
     }
 
-     
+    for (size_t i = 0; i < HEIGHT; i++)
+    {
+        for (size_t j = 0; j < WIDTH; j++)
+        {
+            grid[i][j].state = new_grid[i][j].state;
+        }
+    }
 }
 
 int main()
 {
+    srand(time(NULL));
     init_grid();
-    for (size_t i = 0; i < WIDTH / 5; i++)
-    {
-        for (size_t j = 0; j < HEIGHT / 5; j++)
-        {
-            grid[i][j].state = ALIVE;
-        }
-    }
- 
+    system("clear");
     while (print_grid() != 0)
     {
-        Sleep(SPEED);
+        usleep(SPEED * 1000);
         gen_next();
-        system("cls");
+        system("clear");
     }
     return 0;
 }
